@@ -14,6 +14,7 @@ import CompareConfig from '@/panes/AppSetting/CompareConfig';
 import { useMenusPanes } from '@/store';
 import { decodePaneKey } from '@/store/useMenusPanes';
 
+import CompareConfigNew from './CompareConfigNew';
 import SettingImportYaml from './ImportYaml';
 import SettingOther from './Other';
 import SettingRecord from './Record';
@@ -42,6 +43,11 @@ const AppSetting: ArexPaneFC<{ key: string }> = (props) => {
         key: 'compareConfig',
         label: t('appSetting.compareConfig'),
         children: <CompareConfig appId={appId} />,
+      },
+      {
+        key: 'compareConfigNew',
+        label: t('appSetting.compareConfig'),
+        children: <CompareConfigNew appId={appId} />,
       },
       {
         key: 'importYaml',
