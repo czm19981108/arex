@@ -50,6 +50,7 @@ export default function SortPathKeyInput(props: SortPathKeyInputProps) {
         {/* TODO select path from contract tree */}
         <Input />
       </Form.Item>
+
       <Form.Item
         name='keys'
         label={t('components:appSetting.keys')}
@@ -60,16 +61,7 @@ export default function SortPathKeyInput(props: SortPathKeyInputProps) {
         ]}
       >
         {/* TODO select path from contract tree */}
-        <Select
-          allowClear
-          mode='multiple'
-          options={[
-            {
-              label: '/test/value',
-              value: '/test/value',
-            },
-          ]}
-        />
+        <Select allowClear mode='tags' options={[]} />
       </Form.Item>
     </>
   );

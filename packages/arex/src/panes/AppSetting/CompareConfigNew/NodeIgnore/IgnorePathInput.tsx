@@ -1,7 +1,7 @@
 import { DownOutlined } from '@ant-design/icons';
-import { styled, TooltipButton, tryParseJsonString, useTranslation } from '@arextest/arex-core';
+import { css, styled, TooltipButton, tryParseJsonString } from '@arextest/arex-core';
 import { useRequest } from 'ahooks';
-import { Button, Collapse, Form, Input, InputProps, Space, theme, Typography } from 'antd';
+import { Collapse, Input, InputProps, Space, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
 
 import { ReportService } from '@/services';
@@ -25,8 +25,6 @@ export type ExclusionPathInputProps = Omit<InputProps, 'onChange'> & {
 const IgnorePathInput = (props: ExclusionPathInputProps) => {
   const { appId, operationId, dependency, ...inputProps } = props;
 
-  const { t } = useTranslation();
-
   const [expand, setExpand] = useState(false);
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>();
@@ -43,7 +41,7 @@ const IgnorePathInput = (props: ExclusionPathInputProps) => {
         ...dependency,
       }),
     {
-      ready: !!appId, // TODO && collapseExpand
+      ready: !!appId && expand,
       refreshDeps: [appId, operationId, dependency],
       onBefore() {
         setContract();
@@ -79,11 +77,18 @@ const IgnorePathInput = (props: ExclusionPathInputProps) => {
       <Collapse
         ghost
         activeKey={expand ? 'nodeTree' : undefined}
+        css={css`
+          .ant-collapse-header {
+            display: none !important;
+          }
+          .ant-collapse-content-box {
+            padding: 16px 0 0 !important;
+          }
+        `}
         items={[
           {
             key: 'nodeTree',
             showArrow: false,
-            // TODO styles no padding
             children: (
               <IgnoreTree
                 multiple={false}

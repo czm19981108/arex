@@ -217,7 +217,7 @@ export default function ListSort(props: ListSortProps) {
       });
   }
 
-  const handleAddListSort: AddConfigModalProps<ListSortPrivate>['onOk'] = (form) => {
+  const handleAddListSort: AddConfigModalProps<ListSortPrivate>['onOk'] = (form) =>
     form
       .validateFields()
       .then((res) => {
@@ -233,7 +233,6 @@ export default function ListSort(props: ListSortProps) {
       .catch((e) => {
         console.error(e);
       });
-  };
 
   return (
     <div>

@@ -207,7 +207,7 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
     </div>
   );
 
-  const handleAddIgnore: AddConfigModalProps<NodeIgnorePrivate>['onOk'] = (form) => {
+  const handleAddIgnore: AddConfigModalProps<NodeIgnorePrivate>['onOk'] = (form) =>
     form
       .validateFields()
       .then((res) => {
@@ -222,7 +222,6 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
       .catch((e) => {
         console.log(e);
       });
-  };
 
   return (
     <div>

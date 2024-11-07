@@ -35,7 +35,7 @@ export type AddConfigModalProps<T> = {
     dependency?: Rule[];
   };
   operationList?: OperationInterface<'Interface'>[];
-  onOk?: (form: FormInstance<CompareConfigForm<T>>) => void;
+  onOk?: (form: FormInstance<CompareConfigForm<T>>) => Promise<any>;
   onClose?: () => void;
 };
 
@@ -62,6 +62,7 @@ const AddConfigModal = forwardRef(
 
     // reset dependency when operationId changed
     useEffect(() => {
+      // @ts-ignore
       form.setFieldValue('dependency', undefined);
     }, [operationId]);
 
@@ -132,8 +133,15 @@ const AddConfigModal = forwardRef(
 
     const [dependencyOptions, setDependencyOptions] = useState<SelectProps['options']>();
 
+    const handleOk = () =>
+      props.onOk?.(form).then(() => {
+        setOpenAddConfigModal(false);
+        form.resetFields();
+      });
+
     const handleCloseModal = () => {
       setOpenAddConfigModal(false);
+      form.resetFields();
       props.onClose?.();
     };
 
@@ -142,7 +150,7 @@ const AddConfigModal = forwardRef(
         destroyOnClose
         title={props.title}
         open={openAddConfigModal}
-        onOk={() => props.onOk?.(form)}
+        onOk={handleOk}
         onCancel={handleCloseModal}
       >
         <Form<CompareConfigForm<T>>
@@ -188,7 +196,9 @@ const AddConfigModal = forwardRef(
           {(() =>
             props.field?.(
               props.appId,
+              // @ts-ignore
               form.getFieldValue('operationId'),
+              // @ts-ignore
               form.getFieldValue('dependency'),
             ))()}
         </Form>
