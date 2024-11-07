@@ -46,7 +46,7 @@ const AppSetting: ArexPaneFC<{ key: string }> = (props) => {
       },
       {
         key: 'compareConfigNew',
-        label: t('appSetting.compareConfig'),
+        label: t('appSetting.compareConfig') + ' new',
         children: <CompareConfigNew appId={appId} />,
       },
       {

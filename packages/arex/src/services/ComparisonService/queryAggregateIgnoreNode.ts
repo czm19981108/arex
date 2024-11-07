@@ -8,11 +8,11 @@ export type PageQueryComparisonReq = PagingRequest<{
   dependencyIds?: string[];
 }>;
 
-export type PageQueryComparisonRes = PagingResponse<{ exclusions: ExclusionInfo[] }>;
+export type PageQueryIgnoreComparisonRes = PagingResponse<{ exclusions: ExclusionInfo[] }>;
 
 export async function queryAggregateIgnoreNode(params: PageQueryComparisonReq) {
   const { pageIndex = 1, pageSize = 10, needTotal = true, ...restParams } = params;
-  const res = await request.post<PageQueryComparisonRes>(
+  const res = await request.post<PageQueryIgnoreComparisonRes>(
     '/webApi/config/comparison/exclusions/pageQueryComparisonConfig',
     {
       pageIndex,

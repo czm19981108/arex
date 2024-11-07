@@ -5,6 +5,7 @@ import React from 'react';
 
 import { ApplicationService } from '@/services';
 
+import ListSort from './ListSort';
 import NodeIgnore from './NodeIgnore';
 
 export type CompareConfigNewProps = {
@@ -33,7 +34,7 @@ export default function CompareConfigNew(props: CompareConfigNewProps) {
     {
       key: 'nodeSort',
       label: t('appSetting.nodesSort'),
-      children: <div>ignore Node</div>,
+      children: <ListSort appId={props.appId} operationList={operationList} />,
     },
     {
       key: 'categoryIgnore',

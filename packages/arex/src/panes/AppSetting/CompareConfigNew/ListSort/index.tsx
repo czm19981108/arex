@@ -1,30 +1,30 @@
 import { CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from '@arextest/arex-core';
 import { useRequest } from 'ahooks';
-import { App, Button, Form, Pagination, Popconfirm } from 'antd';
+import { App, Button, Pagination, Popconfirm, Tag } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { useRef, useState } from 'react';
+
+import { ComparisonService } from '@/services';
+import { PageQueryComparisonReq, SortNodeBase } from '@/services/ComparisonService';
 
 import AddConfigModal, {
   AddConfigModalProps,
   AddConfigModalRef,
   parseDependency,
-} from '@/panes/AppSetting/CompareConfigNew/AddConfigModal';
-import IgnorePathInput from '@/panes/AppSetting/CompareConfigNew/NodeIgnore/IgnorePathInput';
-import { ComparisonService } from '@/services';
-import { IgnoreNodeBase, PageQueryComparisonReq } from '@/services/ComparisonService';
-
+} from '../AddConfigModal';
 import ConfigInfoTable, { CONFIG_INFO_TABLE_MODE } from '../ConfigInfoTable';
-import { ExclusionInfo } from '../type';
+import { ExclusionInfo, ListSortInfo } from '../type';
+import SortPathKeyInput from './SortPathKeyInput';
 
-type NodeIgnorePrivate = {
-  exclusions: string;
+type ListSortPrivate = {
+  listPath: string;
+  keys: string[];
 };
 
-export type NodeIgnoreProps = { appId: string } & Pick<
-  AddConfigModalProps<NodeIgnorePrivate>,
-  'operationList'
->;
+export type ListSortProps = {
+  appId: string;
+} & Pick<AddConfigModalProps<ListSortPrivate>, 'operationList'>;
 
 const PAGE_SIZE = {
   SIZE_10: 10,
@@ -34,7 +34,7 @@ const PAGE_SIZE = {
 
 const pageSizeOptions = Object.values(PAGE_SIZE);
 
-export default function NodeIgnore(props: NodeIgnoreProps) {
+export default function ListSort(props: ListSortProps) {
   const { t } = useTranslation();
   const { message } = App.useApp();
 
@@ -55,23 +55,13 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
 
   const [selectedRows, setSelectedRows] = useState<ExclusionInfo[]>([]);
 
-  // 定义表格的列配置
-  const columns: ColumnsType<ExclusionInfo> = [
-    {
-      title: t('components:appSetting.path'),
-      dataIndex: 'exclusionPath',
-      // ...getColumnSearchProps('exclusionPath'),
-      render: (path: string[]) => '/ ' + path.join(' / '),
-    },
-  ];
-
   const {
-    data = { totalCount: 0, exclusions: [] },
+    data = { totalCount: 0, listSorts: [] },
     loading,
-    run: queryAggregateIgnoreNode,
+    run: queryAggregateSortNode,
   } = useRequest(
     () =>
-      ComparisonService.queryAggregateIgnoreNode({
+      ComparisonService.queryAggregateSortNode({
         appId: props.appId,
         pageSize: pagination.pageSize,
         pageIndex: pagination.current,
@@ -83,71 +73,50 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
   );
 
   /**
-   * 批量删除 IgnoreNode
+   * 新增 SortNode
    */
-  const { run: batchDeleteIgnoreNode } = useRequest(ComparisonService.batchDeleteIgnoreNode, {
+  const { run: insertSortNode } = useRequest(ComparisonService.insertSortNode, {
     manual: true,
-    onSuccess(success) {
+    onSuccess(success: boolean) {
       if (success) {
-        message.success(t('common:message.delSuccess'));
-        setTableMode(CONFIG_INFO_TABLE_MODE.DISPLAY);
-        queryAggregateIgnoreNode();
-      } else {
-        message.error(t('common:message.delFailed'));
-      }
-    },
-  });
-
-  const { run: insertIgnoreNode } = useRequest(ComparisonService.insertIgnoreNode, {
-    manual: true,
-    onSuccess(success) {
-      if (success) {
-        message.success(t('message.updateSuccess', { ns: 'common' }));
         addConfigModalRef.current?.close();
-        queryAggregateIgnoreNode();
+        queryAggregateSortNode();
+        message.success(t('components:replay.compareConfigSuccess'));
       } else {
-        message.error(t('message.updateFailed', { ns: 'common' }));
+        message.error('common:message.createFailed');
       }
     },
   });
 
-  function handleSearch(search: Record<string, string | undefined>) {
-    if (pagination.current !== 1) {
-      setPagination({ current: 1, pageSize: pagination.pageSize });
-    }
+  /**
+   * 删除 SortNode
+   */
+  const { run: deleteSortNode } = useRequest(ComparisonService.deleteSortNode, {
+    manual: true,
+    onSuccess(success) {
+      if (success) {
+        message.success(t('message.delSuccess', { ns: 'common' }));
+        addConfigModalRef.current?.close();
+        queryAggregateSortNode();
+      } else {
+        message.error(t('message.delFailed', { ns: 'common' }));
+      }
+    },
+  });
 
-    const operationIds: PageQueryComparisonReq['operationIds'] = [];
-    const dependencyIds: PageQueryComparisonReq['dependencyIds'] = [];
-    const operationNameSearchLowerCase = search['operationName']?.toLowerCase() || '';
-    const dependencyNameSearchLowerCase = search['dependencyName']?.toLowerCase() || '';
-
-    if (operationNameSearchLowerCase && 'global'.includes(operationNameSearchLowerCase))
-      operationIds.push(null);
-
-    props.operationList?.forEach((operation) => {
-      if (
-        operationNameSearchLowerCase &&
-        operation.operationName.toLowerCase().includes(operationNameSearchLowerCase)
-      )
-        operationIds.push(operation.id);
-      operation.dependencyList?.forEach((dependency) => {
-        if (
-          dependencyNameSearchLowerCase &&
-          dependency.operationName?.toLowerCase()?.includes(dependencyNameSearchLowerCase)
-        )
-          dependencyIds.push(dependency.dependencyId);
-      });
-    });
-
-    setSearchParams({
-      operationIds,
-      dependencyIds,
-    });
-  }
-
-  function handleDelete() {
-    batchDeleteIgnoreNode(selectedRows.map((row) => ({ id: row.id })));
-  }
+  const columns: ColumnsType<ListSortInfo> = [
+    {
+      title: t('components:appSetting.path'),
+      dataIndex: 'listPath',
+      render: (path: string[]) => '/ ' + path.join(' / '),
+    },
+    {
+      title: t('components:appSetting.keys'),
+      dataIndex: 'keys',
+      render: (keys: string[][]) =>
+        keys.map((key, index) => <Tag key={index}>{'/ ' + key.join(' / ')}</Tag>),
+    },
+  ];
 
   const TableFooter = () => (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -207,35 +176,78 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
     </div>
   );
 
-  const handleAddIgnore: AddConfigModalProps<NodeIgnorePrivate>['onOk'] = (form) => {
+  function handleSearch(search: Record<string, string | undefined>) {
+    if (pagination.current !== 1) {
+      setPagination({ current: 1, pageSize: pagination.pageSize });
+    }
+
+    const operationIds: PageQueryComparisonReq['operationIds'] = [];
+    const dependencyIds: PageQueryComparisonReq['dependencyIds'] = [];
+    const operationNameSearchLowerCase = search['operationName']?.toLowerCase() || '';
+    const dependencyNameSearchLowerCase = search['dependencyName']?.toLowerCase() || '';
+
+    if (operationNameSearchLowerCase && 'global'.includes(operationNameSearchLowerCase))
+      operationIds.push(null);
+
+    props.operationList?.forEach((operation) => {
+      if (
+        operationNameSearchLowerCase &&
+        operation.operationName.toLowerCase().includes(operationNameSearchLowerCase)
+      )
+        operationIds.push(operation.id);
+      operation.dependencyList?.forEach((dependency) => {
+        if (
+          dependencyNameSearchLowerCase &&
+          dependency.operationName?.toLowerCase()?.includes(dependencyNameSearchLowerCase)
+        )
+          dependencyIds.push(dependency.dependencyId);
+      });
+    });
+
+    setSearchParams({
+      operationIds,
+      dependencyIds,
+    });
+  }
+
+  function handleDelete() {
+    selectedRows.length &&
+      deleteSortNode({
+        id: selectedRows[0].id,
+      });
+  }
+
+  const handleAddListSort: AddConfigModalProps<ListSortPrivate>['onOk'] = (form) => {
     form
       .validateFields()
       .then((res) => {
-        const { dependency, exclusions, ...rest } = res;
+        const { dependency, listPath, keys, ...rest } = res;
         const params = {
           ...rest,
           ...parseDependency(dependency),
-          exclusions: exclusions?.split('/').filter(Boolean),
-        } as IgnoreNodeBase;
-        insertIgnoreNode(params);
+          listPath: listPath.split('/').filter(Boolean),
+          keys: keys.map((key) => key.split('/').filter(Boolean)),
+        } as SortNodeBase;
+        insertSortNode(params);
       })
       .catch((e) => {
-        console.log(e);
+        console.error(e);
       });
   };
 
   return (
     <div>
-      <ConfigInfoTable<ExclusionInfo>
+      <ConfigInfoTable<ListSortInfo>
         rowKey='id'
         requestSearch
         loading={loading}
         columns={columns}
-        dataSource={data?.exclusions}
+        dataSource={data?.listSorts}
         footer={TableFooter}
         rowSelection={
           tableMode !== CONFIG_INFO_TABLE_MODE.DISPLAY
             ? {
+                type: 'radio',
                 onSelect: (record, selected, selectedRows) => {
                   setSelectedRows(selectedRows.filter(Boolean));
                 },
@@ -245,21 +257,18 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
         onSearch={handleSearch}
       />
 
-      <AddConfigModal<NodeIgnorePrivate>
+      <AddConfigModal<ListSortPrivate>
         ref={addConfigModalRef}
-        title={t('components:appSetting.nodesIgnore')}
-        appId={props.appId}
         operationList={props.operationList}
+        appId={props.appId}
+        title={t('components:appSetting.addSortKey')}
+        rules={{
+          operationId: [{ required: true }],
+        }}
         field={(appId, operationId, dependency) => (
-          <Form.Item
-            name='exclusions'
-            label={t('components:appSetting.path')}
-            rules={[{ required: true }]}
-          >
-            <IgnorePathInput appId={appId} operationId={operationId} dependency={dependency} />
-          </Form.Item>
+          <SortPathKeyInput appId={appId} operationId={operationId} dependency={dependency} />
         )}
-        onOk={handleAddIgnore}
+        onOk={handleAddListSort}
       />
     </div>
   );

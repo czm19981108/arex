@@ -1,11 +1,13 @@
-import { styled, tryParseJsonString } from '@arextest/arex-core';
+import { DownOutlined } from '@ant-design/icons';
+import { styled, TooltipButton, tryParseJsonString, useTranslation } from '@arextest/arex-core';
 import { useRequest } from 'ahooks';
-import { Collapse, Input, InputProps, theme, Typography } from 'antd';
+import { Button, Collapse, Form, Input, InputProps, Space, theme, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import IgnoreTree from '@/panes/AppSetting/CompareConfig/NodesIgnore/IgnoreTree';
 import { ReportService } from '@/services';
 import { DependencyParams } from '@/services/ComparisonService';
+
+import IgnoreTree from './IgnoreTree';
 
 const IgnoreTreeWrapper = styled.div<{ lineThrough?: boolean }>`
   .ant-tree-node-selected {
@@ -20,10 +22,12 @@ export type ExclusionPathInputProps = Omit<InputProps, 'onChange'> & {
   onChange?: (value: string) => void;
 };
 
-const ExclusionPathInput = (props: ExclusionPathInputProps) => {
+const IgnorePathInput = (props: ExclusionPathInputProps) => {
   const { appId, operationId, dependency, ...inputProps } = props;
 
-  const { token } = theme.useToken();
+  const { t } = useTranslation();
+
+  const [expand, setExpand] = useState(false);
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>();
 
@@ -39,7 +43,7 @@ const ExclusionPathInput = (props: ExclusionPathInputProps) => {
         ...dependency,
       }),
     {
-      ready: !!appId,
+      ready: !!appId, // TODO && collapseExpand
       refreshDeps: [appId, operationId, dependency],
       onBefore() {
         setContract();
@@ -55,23 +59,31 @@ const ExclusionPathInput = (props: ExclusionPathInputProps) => {
 
   return (
     <IgnoreTreeWrapper lineThrough>
-      <Input
-        {...inputProps}
-        onChange={(e) => {
-          props.onChange?.(e.target.value);
-        }}
-      />
+      <Space.Compact style={{ width: '100%' }}>
+        <Input
+          {...inputProps}
+          onChange={(e) => {
+            props.onChange?.(e.target.value);
+          }}
+        />
+        <TooltipButton
+          type='default'
+          size='middle'
+          title={<Typography.Text>{'select from tree'}</Typography.Text>}
+          icon={<DownOutlined />}
+          textProps={{ style: { height: '10px' } }}
+          onClick={() => setExpand(!expand)}
+        />
+      </Space.Compact>
 
       <Collapse
         ghost
+        activeKey={expand ? 'nodeTree' : undefined}
         items={[
           {
             key: 'nodeTree',
-            label: (
-              <Typography.Text style={{ color: token.colorPrimaryText }}>
-                select from tree
-              </Typography.Text>
-            ),
+            showArrow: false,
+            // TODO styles no padding
             children: (
               <IgnoreTree
                 multiple={false}
@@ -91,4 +103,4 @@ const ExclusionPathInput = (props: ExclusionPathInputProps) => {
   );
 };
 
-export default ExclusionPathInput;
+export default IgnorePathInput;

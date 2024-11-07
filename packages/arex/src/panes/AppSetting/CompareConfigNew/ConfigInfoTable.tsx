@@ -12,6 +12,11 @@ import { SearchHighLight } from '@/components';
 
 import { BaseConfigInfo } from './type';
 
+export enum CONFIG_INFO_TABLE_MODE {
+  DISPLAY,
+  EDIT,
+}
+
 export interface ConfigInfoTableProps<T> extends TableProps<T> {
   requestSearch?: boolean;
   onSearch?: (search: Record<string, string | undefined>) => void;
