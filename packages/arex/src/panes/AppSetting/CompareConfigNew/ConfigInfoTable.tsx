@@ -10,7 +10,7 @@ import { useImmer } from 'use-immer';
 
 import { SearchHighLight } from '@/components';
 
-import { ComparisonConfigInfo } from './type';
+import { ComparisonConfigInfo, ExpirationType } from './type';
 
 export enum CONFIG_INFO_TABLE_MODE {
   DISPLAY,
@@ -53,7 +53,10 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
   };
 
   // 获取列搜索配置
-  const getColumnSearchProps = (dataIndex: keyof T, searchFallback?: ReactNode): ColumnType<T> => ({
+  const getColumnSearchProps = (
+    dataIndex: keyof T,
+    fallback?: ReactNode | ((record: T) => ReactNode),
+  ): ColumnType<T> => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
       <div style={{ padding: 12 }}>
         <Input
@@ -107,7 +110,7 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
     onFilterDropdownOpenChange: (open: boolean) => {
       open && setTimeout(() => searchInput.current?.select(), 100);
     },
-    render: (text: string | null) => {
+    render: (text: string | null, record) => {
       const columnsSearchValue = search?.[dataIndex as string];
       if (
         !!columnsSearchValue &&
@@ -115,7 +118,12 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
       ) {
         return <SearchHighLight text={text} keyword={search[dataIndex as string]} />;
       } else {
-        return text || searchFallback;
+        return (
+          text ||
+          (typeof fallback === 'function'
+            ? (fallback as (record: T) => ReactNode)?.(record)
+            : fallback)
+        );
       }
     },
   });
@@ -127,21 +135,34 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
       dataIndex: 'operationName',
       ...getColumnSearchProps(
         'operationName',
-        <Typography.Text type='secondary'>{`<Global>`}</Typography.Text>,
+        <Typography.Text italic type='secondary'>
+          Global
+        </Typography.Text>,
       ),
       ...props.builtInColumns?.operationName,
     },
     {
       title: t('components:appSetting.dependency'),
       dataIndex: 'dependencyName',
-      ...getColumnSearchProps('dependencyName'),
+      ...getColumnSearchProps('dependencyName', (record) => (
+        <Typography.Text italic type='secondary'>
+          {record.operationName ? 'Entry' : 'Global'}
+        </Typography.Text>
+      )),
       ...props.builtInColumns?.dependencyName,
     },
     ...(configColumns || []),
     {
       title: t('components:appSetting.expireOn'),
       dataIndex: 'expirationDate',
-      render: (date: number) => dayjs(date).format('YYYY/MM/HH:mm'),
+      render: (date: number, record) =>
+        record.expirationType === ExpirationType.PINNED_NEVER_EXPIRED ? (
+          <Typography.Text italic type='secondary' style={{ wordBreak: 'keep-all' }}>
+            {t('common:neverExpired')}
+          </Typography.Text>
+        ) : (
+          dayjs(date).format('YYYY/MM/HH:mm')
+        ),
       ...props.builtInColumns?.expirationDate,
     },
   ];

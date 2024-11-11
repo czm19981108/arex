@@ -4,6 +4,7 @@ import { Tabs, TabsProps } from 'antd';
 import React from 'react';
 
 import CategoryIgnore from '@/panes/AppSetting/CompareConfigNew/CategoryIgnore';
+import NodesTransform from '@/panes/AppSetting/CompareConfigNew/NodesTransform';
 import { ApplicationService } from '@/services';
 
 import ListSort from './ListSort';
@@ -45,7 +46,7 @@ export default function CompareConfigNew(props: CompareConfigNewProps) {
     {
       key: 'nodeTransform',
       label: t('appSetting.nodesTransform'),
-      children: <div>Node Transform</div>,
+      children: <NodesTransform appId={props.appId} operationList={operationList} />,
     },
   ];
 

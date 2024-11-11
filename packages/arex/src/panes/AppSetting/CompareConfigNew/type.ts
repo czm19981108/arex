@@ -1,12 +1,17 @@
 import { IgnoreCategory } from '@/services/ComparisonService';
 
+export enum ExpirationType {
+  PINNED_NEVER_EXPIRED,
+  SOFT_TIME_EXPIRED,
+}
+
 export type ComparisonConfigInfo = {
   id: string;
   operationName: string;
   dependencyName: string;
   dependencyType: string;
   expirationDate: number;
-  expirationType: number;
+  expirationType: ExpirationType;
 };
 
 export interface ExclusionInfo extends ComparisonConfigInfo {

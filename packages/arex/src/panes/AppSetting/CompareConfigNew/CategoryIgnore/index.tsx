@@ -100,18 +100,6 @@ const CategoryIgnore: FC<CategoryIgnoreProps> = (props) => {
     },
   ];
 
-  // const handleAdd = () => {
-  //   if (operationTypeValue) {
-  //     insertIgnoreCategory({
-  //       operationType: operationTypeValue,
-  //       operationName: operationNameValue,
-  //     });
-  //   } else {
-  //     setOperationTypeSelectStatus('error');
-  //     setTimeout(() => setOperationTypeSelectStatus(undefined), 1000);
-  //   }
-  // };
-
   function handleSearch(search: Record<string, string | undefined>) {
     if (pagination.current !== 1) {
       setPagination({ current: 1, pageSize: pagination.pageSize });

@@ -1,30 +1,22 @@
 import { CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { css, useTranslation } from '@arextest/arex-core';
+import { useTranslation } from '@arextest/arex-core';
 import { useRequest } from 'ahooks';
-import { App, Button, Pagination, Popconfirm, Select, Tag, Tooltip } from 'antd';
+import { App, Button, Form, Pagination, Popconfirm } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { useRef, useState } from 'react';
-
-import { ComparisonService } from '@/services';
-import { PageQueryComparisonReq, SortNodeBase } from '@/services/ComparisonService';
 
 import AddConfigModal, {
   AddConfigModalProps,
   AddConfigModalRef,
   parseDependency,
-} from '../AddConfigModal';
-import ConfigInfoTable, { CONFIG_INFO_TABLE_MODE } from '../ConfigInfoTable';
-import { ListSortInfo } from '../type';
-import SortPathKeyInput from './SortPathKeyInput';
-
-type ListSortPrivate = {
-  listPath: string;
-  keys: string[];
-};
-
-export type ListSortProps = {
-  appId: string;
-} & Pick<AddConfigModalProps<ListSortPrivate>, 'operationList'>;
+} from '@/panes/AppSetting/CompareConfigNew/AddConfigModal';
+import ConfigInfoTable, {
+  CONFIG_INFO_TABLE_MODE,
+} from '@/panes/AppSetting/CompareConfigNew/ConfigInfoTable';
+import RootTransformInput from '@/panes/AppSetting/CompareConfigNew/NodesTransform/RootTransformInput';
+import { RootTransformInfo } from '@/panes/AppSetting/CompareConfigNew/type';
+import { ComparisonService } from '@/services';
+import { PageQueryComparisonReq, UpdateTransformRootNodeReq } from '@/services/ComparisonService';
 
 const PAGE_SIZE = {
   SIZE_10: 10,
@@ -34,7 +26,11 @@ const PAGE_SIZE = {
 
 const pageSizeOptions = Object.values(PAGE_SIZE);
 
-export default function ListSort(props: ListSortProps) {
+export type NodeTransformProps = {
+  appId: string;
+} & Pick<AddConfigModalProps<RootTransformInfo>, 'operationList'>;
+
+const NodesTransform = (props: NodeTransformProps) => {
   const { t } = useTranslation();
   const { message } = App.useApp();
 
@@ -43,6 +39,8 @@ export default function ListSort(props: ListSortProps) {
   const [tableMode, setTableMode] = useState<CONFIG_INFO_TABLE_MODE>(
     CONFIG_INFO_TABLE_MODE.DISPLAY,
   );
+
+  const [selectedRows, setSelectedRows] = useState<RootTransformInfo[]>([]);
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -53,15 +51,13 @@ export default function ListSort(props: ListSortProps) {
     Pick<PageQueryComparisonReq, 'operationIds' | 'dependencyIds'>
   >({});
 
-  const [selectedRows, setSelectedRows] = useState<ListSortInfo[]>([]);
-
   const {
-    data = { totalCount: 0, listSorts: [] },
+    data = { rootTransformInfos: [], totalCount: 0 },
     loading,
-    run: queryAggregateSortNode,
+    run: queryAggregateRootTransform,
   } = useRequest(
     () =>
-      ComparisonService.queryAggregateSortNode({
+      ComparisonService.queryAggregateRootTransform({
         appId: props.appId,
         pageSize: pagination.pageSize,
         pageIndex: pagination.current,
@@ -72,72 +68,31 @@ export default function ListSort(props: ListSortProps) {
     },
   );
 
-  /**
-   * 新增 SortNode
-   */
-  const { run: insertSortNode } = useRequest(ComparisonService.insertSortNode, {
+  const { run: updateTransformNode } = useRequest(ComparisonService.updateTransformRootNode, {
     manual: true,
-    onSuccess(success: boolean) {
+    onSuccess: (success) => {
       if (success) {
-        addConfigModalRef.current?.close();
-        queryAggregateSortNode();
-        message.success(t('components:replay.compareConfigSuccess'));
-      } else {
-        message.error('common:message.createFailed');
-      }
+        queryAggregateRootTransform();
+        message.success(t('common:message.updateSuccess'));
+      } else message.error(t('common:message.updateFailed'));
     },
   });
 
-  /**
-   * 删除 SortNode
-   */
-  const { run: deleteSortNode } = useRequest(ComparisonService.deleteSortNode, {
+  const { run: deleteTransformRootNode } = useRequest(ComparisonService.deleteTransformRootNode, {
     manual: true,
-    onSuccess(success) {
+    onSuccess: (success) => {
       if (success) {
-        message.success(t('message.delSuccess', { ns: 'common' }));
-        addConfigModalRef.current?.close();
-        queryAggregateSortNode();
-      } else {
-        message.error(t('message.delFailed', { ns: 'common' }));
-      }
+        setTableMode(CONFIG_INFO_TABLE_MODE.DISPLAY);
+        queryAggregateRootTransform();
+        message.success(t('common:message.updateSuccess'));
+      } else message.error(t('common:message.updateFailed'));
     },
   });
 
-  const columns: ColumnsType<ListSortInfo> = [
+  const columns: ColumnsType<RootTransformInfo> = [
     {
-      title: t('components:appSetting.path'),
-      dataIndex: 'listPath',
-      render: (path: string[]) => '/' + path.join('/'),
-    },
-    {
-      title: t('components:appSetting.keys'),
-      dataIndex: 'keys',
-      render: (keys: string[][]) => (
-        <Select
-          open={false}
-          suffixIcon={null}
-          removeIcon={null}
-          variant='borderless'
-          mode='multiple'
-          value={keys.map((key) => '/' + key.join('/'))}
-          maxTagCount={2}
-          maxTagPlaceholder={(omittedValues) => (
-            <Tooltip title={omittedValues.map(({ label }) => label).join(', ')}>
-              <span>{omittedValues.length} more...</span>
-            </Tooltip>
-          )}
-          css={css`
-            pointer-events: none; // readonly mode
-            .ant-select-selection-overflow-item-rest {
-              pointer-events: all; // enable tooltip hover event
-            }
-            .ant-select-selection-overflow-item-suffix {
-              display: none;
-            }
-          `}
-        />
-      ),
+      dataIndex: 'transformMethodName',
+      title: t('components:appSetting.transformMethodName'),
     },
   ];
 
@@ -199,6 +154,15 @@ export default function ListSort(props: ListSortProps) {
     </div>
   );
 
+  const handleSubmit: AddConfigModalProps<RootTransformInfo>['onSubmit'] = (form) =>
+    form.validateFields().then(({ dependency, ...rest }) => {
+      const params = {
+        ...parseDependency(dependency),
+        ...rest,
+      } as UpdateTransformRootNodeReq;
+      updateTransformNode(params);
+    });
+
   function handleSearch(search: Record<string, string | undefined>) {
     if (pagination.current !== 1) {
       setPagination({ current: 1, pageSize: pagination.pageSize });
@@ -209,8 +173,8 @@ export default function ListSort(props: ListSortProps) {
     const operationNameSearchLowerCase = search['operationName']?.toLowerCase() || '';
     const dependencyNameSearchLowerCase = search['dependencyName']?.toLowerCase() || '';
 
-    if (operationNameSearchLowerCase && 'global'.includes(operationNameSearchLowerCase))
-      operationIds.push(null);
+    // if (operationNameSearchLowerCase && 'global'.includes(operationNameSearchLowerCase))
+    //   operationIds.push(null);
 
     props.operationList?.forEach((operation) => {
       if (
@@ -234,32 +198,18 @@ export default function ListSort(props: ListSortProps) {
   }
 
   function handleDelete() {
-    selectedRows.length &&
-      deleteSortNode({
-        id: selectedRows[0].id,
-      });
+    const id = selectedRows[0]?.id;
+    if (id) deleteTransformRootNode(id);
   }
 
-  const handleAddListSort: AddConfigModalProps<ListSortPrivate>['onSubmit'] = (form) =>
-    form.validateFields().then((res) => {
-      const { dependency, listPath, keys, ...rest } = res;
-      const params = {
-        ...rest,
-        ...parseDependency(dependency),
-        listPath: listPath.split('/').filter(Boolean),
-        keys: keys.map((key) => key.split('/').filter(Boolean)),
-      } as SortNodeBase;
-      insertSortNode(params);
-    });
-
   return (
-    <div>
-      <ConfigInfoTable<ListSortInfo>
+    <>
+      <ConfigInfoTable<RootTransformInfo>
         rowKey='id'
         requestSearch
         loading={loading}
         columns={columns}
-        dataSource={data?.listSorts}
+        dataSource={data.rootTransformInfos}
         footer={TableFooter}
         rowSelection={
           tableMode !== CONFIG_INFO_TABLE_MODE.DISPLAY
@@ -274,19 +224,35 @@ export default function ListSort(props: ListSortProps) {
         onSearch={handleSearch}
       />
 
-      <AddConfigModal<ListSortPrivate>
+      <AddConfigModal<RootTransformInfo>
         ref={addConfigModalRef}
-        operationList={props.operationList}
+        title={t('components:appSetting.methodName')} // TODO
         appId={props.appId}
-        title={t('components:appSetting.addSortKey')}
+        operationList={props.operationList}
         rules={{
-          operationId: [{ required: true }],
+          operationId: [
+            {
+              required: true,
+            },
+          ],
         }}
-        field={({ appId, operationId, dependency }) => (
-          <SortPathKeyInput appId={appId} operationId={operationId} dependency={dependency} />
+        field={(fieldProps) => (
+          <Form.Item
+            name='transformMethodName'
+            label={t('components:appSetting.addTransformNode')}
+            rules={[
+              {
+                required: true,
+              },
+            ]}
+          >
+            <RootTransformInput appId={fieldProps.appId} />
+          </Form.Item>
         )}
-        onSubmit={handleAddListSort}
+        onSubmit={handleSubmit}
       />
-    </div>
+    </>
   );
-}
+};
+
+export default NodesTransform;

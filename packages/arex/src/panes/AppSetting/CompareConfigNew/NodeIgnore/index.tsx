@@ -59,7 +59,7 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
     {
       title: t('components:appSetting.path'),
       dataIndex: 'exclusionPath',
-      render: (path: string[]) => '/ ' + path.join(' / '),
+      render: (path: string[]) => '/' + path.join('/'),
     },
   ];
 
@@ -206,20 +206,15 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
   );
 
   const handleAddIgnore: AddConfigModalProps<NodeIgnorePrivate>['onSubmit'] = (form) =>
-    form
-      .validateFields()
-      .then((res) => {
-        const { dependency, exclusions, ...rest } = res;
-        const params = {
-          ...rest,
-          ...parseDependency(dependency),
-          exclusions: exclusions?.split('/').filter(Boolean),
-        } as IgnoreNodeBase;
-        insertIgnoreNode(params);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+    form.validateFields().then((res) => {
+      const { dependency, exclusions, ...rest } = res;
+      const params = {
+        ...rest,
+        ...parseDependency(dependency),
+        exclusions: exclusions?.split('/').filter(Boolean),
+      } as IgnoreNodeBase;
+      insertIgnoreNode(params);
+    });
 
   return (
     <div>
