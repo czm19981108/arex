@@ -10,7 +10,7 @@ import { useImmer } from 'use-immer';
 
 import { SearchHighLight } from '@/components';
 
-import { BaseConfigInfo } from './type';
+import { ComparisonConfigInfo } from './type';
 
 export enum CONFIG_INFO_TABLE_MODE {
   DISPLAY,
@@ -18,11 +18,12 @@ export enum CONFIG_INFO_TABLE_MODE {
 }
 
 export interface ConfigInfoTableProps<T> extends TableProps<T> {
+  builtInColumns?: Partial<Record<keyof T, ColumnsType<T>[number]>>;
   requestSearch?: boolean;
   onSearch?: (search: Record<string, string | undefined>) => void;
 }
 
-export default function ConfigInfoTable<T extends BaseConfigInfo<T>>(
+export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
   props: ConfigInfoTableProps<T>,
 ) {
   const { t } = useTranslation();
@@ -128,17 +129,20 @@ export default function ConfigInfoTable<T extends BaseConfigInfo<T>>(
         'operationName',
         <Typography.Text type='secondary'>{`<Global>`}</Typography.Text>,
       ),
+      ...props.builtInColumns?.operationName,
     },
     {
       title: t('components:appSetting.dependency'),
       dataIndex: 'dependencyName',
       ...getColumnSearchProps('dependencyName'),
+      ...props.builtInColumns?.dependencyName,
     },
     ...(configColumns || []),
     {
       title: t('components:appSetting.expireOn'),
       dataIndex: 'expirationDate',
       render: (date: number) => dayjs(date).format('YYYY/MM/HH:mm'),
+      ...props.builtInColumns?.expirationDate,
     },
   ];
 

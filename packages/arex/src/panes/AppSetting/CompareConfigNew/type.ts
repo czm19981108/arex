@@ -1,4 +1,6 @@
-export type BaseConfigInfo<T> = {
+import { IgnoreCategory } from '@/services/ComparisonService';
+
+export type ComparisonConfigInfo = {
   id: string;
   operationName: string;
   dependencyName: string;
@@ -7,22 +9,19 @@ export type BaseConfigInfo<T> = {
   expirationType: number;
 };
 
-export type ExclusionInfo = BaseConfigInfo<{
+export interface ExclusionInfo extends ComparisonConfigInfo {
   exclusionPath: string[];
-}>;
+}
 
-export type ListSortInfo = BaseConfigInfo<{
+export interface ListSortInfo extends ComparisonConfigInfo {
   listPath: string[];
   keys: string[][];
-}>;
+}
 
-type IgnoreCategory = {
-  operationType: string;
-  operationName?: string;
-};
+export interface IgnoreCategoryInfo extends ComparisonConfigInfo {
+  ignoreCategoryDetail: IgnoreCategory;
+}
 
-export type IgnoreCategoryInfo = BaseConfigInfo<{ ignoreCategoryDetail: IgnoreCategory }>;
-
-export type RootTransformInfo = BaseConfigInfo<{
+export interface RootTransformInfo extends ComparisonConfigInfo {
   transformMethodName: string;
-}>;
+}

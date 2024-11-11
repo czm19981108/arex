@@ -53,7 +53,7 @@ export default function ListSort(props: ListSortProps) {
     Pick<PageQueryComparisonReq, 'operationIds' | 'dependencyIds'>
   >({});
 
-  const [selectedRows, setSelectedRows] = useState<ExclusionInfo[]>([]);
+  const [selectedRows, setSelectedRows] = useState<ListSortInfo[]>([]);
 
   const {
     data = { totalCount: 0, listSorts: [] },
@@ -217,7 +217,7 @@ export default function ListSort(props: ListSortProps) {
       });
   }
 
-  const handleAddListSort: AddConfigModalProps<ListSortPrivate>['onOk'] = (form) =>
+  const handleAddListSort: AddConfigModalProps<ListSortPrivate>['onSubmit'] = (form) =>
     form
       .validateFields()
       .then((res) => {
@@ -264,10 +264,10 @@ export default function ListSort(props: ListSortProps) {
         rules={{
           operationId: [{ required: true }],
         }}
-        field={(appId, operationId, dependency) => (
+        field={({ appId, operationId, dependency }) => (
           <SortPathKeyInput appId={appId} operationId={operationId} dependency={dependency} />
         )}
-        onOk={handleAddListSort}
+        onSubmit={handleAddListSort}
       />
     </div>
   );

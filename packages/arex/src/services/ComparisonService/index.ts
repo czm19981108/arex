@@ -11,6 +11,7 @@ export * from './insertIgnoreCategory';
 export * from './insertIgnoreNode';
 export * from './insertSortNode';
 export * from './insertTransformNode';
+export * from './queryAggregateIgnoreCategory';
 export * from './queryAggregateIgnoreNode';
 export * from './queryAggregateSortNode';
 export * from './queryCategoryType';

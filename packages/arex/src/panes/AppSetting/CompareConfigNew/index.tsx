@@ -3,6 +3,7 @@ import { useRequest } from 'ahooks';
 import { Tabs, TabsProps } from 'antd';
 import React from 'react';
 
+import CategoryIgnore from '@/panes/AppSetting/CompareConfigNew/CategoryIgnore';
 import { ApplicationService } from '@/services';
 
 import ListSort from './ListSort';
@@ -39,7 +40,7 @@ export default function CompareConfigNew(props: CompareConfigNewProps) {
     {
       key: 'categoryIgnore',
       label: t('appSetting.categoryIgnore'),
-      children: <div>Category Node</div>,
+      children: <CategoryIgnore appId={props.appId} operationList={operationList} />,
     },
     {
       key: 'nodeTransform',

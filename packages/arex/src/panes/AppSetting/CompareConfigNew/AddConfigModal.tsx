@@ -3,6 +3,7 @@ import { useRequest } from 'ahooks';
 import { Form, FormInstance, Input, Modal, Select, SelectProps } from 'antd';
 import { Rule } from 'antd/es/form';
 import React, {
+  FC,
   ForwardedRef,
   ReactNode,
   useEffect,
@@ -26,16 +27,24 @@ type CompareConfigParams = {
 
 type CompareConfigForm<T> = CompareConfigParams & T;
 
+export type AddConfigModalFieldProps<T> = {
+  appId: string;
+  operationId?: string;
+  dependency?: DependencyParams;
+  form: FormInstance<CompareConfigForm<T>>;
+};
+
 export type AddConfigModalProps<T> = {
   appId: string;
   title?: ReactNode;
-  field?: (appId: string, operationId?: string, dependency?: DependencyParams) => ReactNode;
+  field?: FC<AddConfigModalFieldProps<T>>;
   rules?: {
     operationId?: Rule[];
     dependency?: Rule[];
   };
+  builtInItems?: Partial<Record<keyof CompareConfigParams, boolean | undefined>>;
   operationList?: OperationInterface<'Interface'>[];
-  onOk?: (form: FormInstance<CompareConfigForm<T>>) => Promise<any>;
+  onSubmit?: (form: FormInstance<CompareConfigForm<T>>) => Promise<any>;
   onClose?: () => void;
 };
 
@@ -59,6 +68,7 @@ const AddConfigModal = forwardRef(
 
     const [form] = Form.useForm<CompareConfigForm<T>>();
     const operationId = Form.useWatch('operationId', form);
+    const dependency = Form.useWatch('dependency', form);
 
     // reset dependency when operationId changed
     useEffect(() => {
@@ -134,7 +144,7 @@ const AddConfigModal = forwardRef(
     const [dependencyOptions, setDependencyOptions] = useState<SelectProps['options']>();
 
     const handleOk = () =>
-      props.onOk?.(form).then(() => {
+      props.onSubmit?.(form).then(() => {
         setOpenAddConfigModal(false);
         form.resetFields();
       });
@@ -161,46 +171,51 @@ const AddConfigModal = forwardRef(
           }}
           style={{ padding: '8px 0' }}
         >
-          <Form.Item name='appId' hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name='operationId'
-            label={t('components:appSetting.interface')}
-            rules={props.rules?.operationId}
-          >
-            <Select
-              allowClear
-              optionFilterProp='label'
-              placeholder='choose interface'
-              popupMatchSelectWidth={false}
-              options={interfaceOptions}
-            />
-          </Form.Item>
+          {props.builtInItems?.appId !== false && (
+            <Form.Item name='appId' hidden>
+              <Input />
+            </Form.Item>
+          )}
 
-          <Form.Item
-            name='dependency'
-            label={t('components:appSetting.dependency')}
-            rules={props.rules?.dependency}
-          >
-            <Select
-              allowClear
-              optionFilterProp='label'
-              placeholder='choose external dependency'
-              popupMatchSelectWidth={false}
-              loading={loadingDependency}
-              options={dependencyOptions}
-            />
-          </Form.Item>
+          {props.builtInItems?.operationId !== false && (
+            <Form.Item
+              name='operationId'
+              label={t('components:appSetting.interface')}
+              rules={props.rules?.operationId}
+            >
+              <Select
+                allowClear
+                optionFilterProp='label'
+                placeholder='choose interface'
+                popupMatchSelectWidth={false}
+                options={interfaceOptions}
+              />
+            </Form.Item>
+          )}
 
+          {props.builtInItems?.dependency !== false && (
+            <Form.Item
+              name='dependency'
+              label={t('components:appSetting.dependency')}
+              rules={props.rules?.dependency}
+            >
+              <Select
+                allowClear
+                optionFilterProp='label'
+                placeholder='choose external dependency'
+                popupMatchSelectWidth={false}
+                loading={loadingDependency}
+                options={dependencyOptions}
+              />
+            </Form.Item>
+          )}
           {(() =>
-            props.field?.(
-              props.appId,
-              // @ts-ignore
-              form.getFieldValue('operationId'),
-              // @ts-ignore
-              form.getFieldValue('dependency'),
-            ))()}
+            props.field?.({
+              appId: props.appId,
+              operationId,
+              dependency: parseDependency(dependency),
+              form,
+            }))()}
         </Form>
       </Modal>
     );

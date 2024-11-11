@@ -55,12 +55,10 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
 
   const [selectedRows, setSelectedRows] = useState<ExclusionInfo[]>([]);
 
-  // 定义表格的列配置
   const columns: ColumnsType<ExclusionInfo> = [
     {
       title: t('components:appSetting.path'),
       dataIndex: 'exclusionPath',
-      // ...getColumnSearchProps('exclusionPath'),
       render: (path: string[]) => '/ ' + path.join(' / '),
     },
   ];
@@ -207,7 +205,7 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
     </div>
   );
 
-  const handleAddIgnore: AddConfigModalProps<NodeIgnorePrivate>['onOk'] = (form) =>
+  const handleAddIgnore: AddConfigModalProps<NodeIgnorePrivate>['onSubmit'] = (form) =>
     form
       .validateFields()
       .then((res) => {
@@ -249,7 +247,7 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
         title={t('components:appSetting.nodesIgnore')}
         appId={props.appId}
         operationList={props.operationList}
-        field={(appId, operationId, dependency) => (
+        field={({ appId, operationId, dependency }) => (
           <Form.Item
             name='exclusions'
             label={t('components:appSetting.path')}
@@ -258,7 +256,7 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
             <IgnorePathInput appId={appId} operationId={operationId} dependency={dependency} />
           </Form.Item>
         )}
-        onOk={handleAddIgnore}
+        onSubmit={handleAddIgnore}
       />
     </div>
   );

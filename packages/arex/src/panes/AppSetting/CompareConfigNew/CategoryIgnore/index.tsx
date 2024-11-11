@@ -1,269 +1,266 @@
-import { CloseOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from '@arextest/arex-core';
-import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { useRequest } from 'ahooks';
-import { App, Button, Flex, Select, SelectProps, Space, Table } from 'antd';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import { App, Button, Pagination, Popconfirm } from 'antd';
+import { ColumnsType } from 'antd/es/table';
+import React, { FC, useRef, useState } from 'react';
 
-import { CONFIG_TARGET } from '@/panes/AppSetting/CompareConfig';
-import { ApplicationService, ComparisonService } from '@/services';
-import { IgnoreCategory } from '@/services/ComparisonService';
+import AddConfigModal, {
+  AddConfigModalProps,
+  AddConfigModalRef,
+} from '@/panes/AppSetting/CompareConfigNew/AddConfigModal';
+import DependencyInput from '@/panes/AppSetting/CompareConfigNew/CategoryIgnore/DependencyInput';
+import ConfigInfoTable, {
+  CONFIG_INFO_TABLE_MODE,
+} from '@/panes/AppSetting/CompareConfigNew/ConfigInfoTable';
+import { IgnoreCategoryInfo } from '@/panes/AppSetting/CompareConfigNew/type';
+import { ComparisonService } from '@/services';
+import { IgnoreCategory, PageQueryComparisonReq } from '@/services/ComparisonService';
 
 export type CategoryIgnoreProps = {
-  appId?: string;
-  operationId?: string;
-  configTarget: CONFIG_TARGET;
+  appId: string;
+} & Pick<AddConfigModalProps<IgnoreCategory>, 'operationList'>;
+
+const PAGE_SIZE = {
+  SIZE_10: 10,
+  SIZE_20: 20,
+  SIZE_30: 30,
 };
 
-enum Mode {
-  READ,
-  ADD,
-  DELETE,
-}
+const pageSizeOptions = Object.values(PAGE_SIZE);
+
 const CategoryIgnore: FC<CategoryIgnoreProps> = (props) => {
   const { message } = App.useApp();
   const { t } = useTranslation();
-  const [footerRef] = useAutoAnimate();
 
-  const [mode, setMode] = useState<Mode>(Mode.READ);
+  const [tableMode, setTableMode] = useState<CONFIG_INFO_TABLE_MODE>(
+    CONFIG_INFO_TABLE_MODE.DISPLAY,
+  );
 
-  const [operationTypeValue, setOperationTypeValue] = useState<string>();
-  const [operationTypeSelectStatus, setOperationTypeSelectStatus] =
-    useState<SelectProps['status']>();
+  const [selectedRows, setSelectedRows] = useState<IgnoreCategoryInfo[]>([]);
 
-  const [operationNameValue, setOperationNameValue] = useState<string>();
-
-  useEffect(() => {
-    setOperationNameValue(undefined);
-  }, [props.operationId, props.configTarget]);
-
-  const [selectedRowKey, setSelectedRowKey] = useState<string>('');
-
-  const [optionsGroupMap, setOptionsGroupMap] = useState<Map<string, Set<string>>>(new Map());
-
-  const [operationNameOptions, setOperationNameOptions] = useState<SelectProps['options']>([]);
-
-  const [categoryTypeOptions, setCategoryOptions] = useState<SelectProps['options']>([]);
-  useRequest(ComparisonService.queryCategoryType, {
-    onSuccess(res) {
-      const options = res
-        .filter((item) => !item.entryPoint)
-        .map((item) => ({
-          label: item.name,
-          value: item.name,
-        }));
-      setCategoryOptions(options);
-    },
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: PAGE_SIZE.SIZE_10,
   });
 
-  const reset = () => {
-    setMode(Mode.READ);
-    setSelectedRowKey('');
-    setOperationNameValue(undefined);
-    setOperationTypeValue(undefined);
-  };
+  const [searchParams, setSearchParams] = useState<
+    Pick<PageQueryComparisonReq, 'operationIds' | 'dependencyIds'>
+  >({});
 
-  // 获取接口依赖并聚合
-  const { data: interfacesList = [] } = useRequest(
-    () => ApplicationService.queryInterfacesList<'Interface'>({ appId: props.appId as string }),
-    {
-      ready: !!props.appId,
-      onSuccess(res) {
-        const groupMap = res.reduce((group, item) => {
-          if (!item.dependencyList) return group;
+  const addConfigModalRef = useRef<AddConfigModalRef>(null);
 
-          item.dependencyList?.forEach((dependency) => {
-            if (group.has(dependency.operationType)) {
-              group.get(dependency.operationType)?.add(dependency.operationName);
-            } else {
-              group.set(dependency.operationType, new Set([dependency.operationName]));
-            }
-          });
-          return group;
-        }, new Map<string, Set<string>>());
-
-        setOptionsGroupMap(groupMap);
-      },
-    },
-  );
-
-  const { data: ignoreCategoryData = [], run: queryIgnoreCategory } = useRequest(
+  const {
+    data = { totalCount: 0, ignoreCategories: [] },
+    loading,
+    run: queryIgnoreCategory,
+  } = useRequest(
     () =>
-      ComparisonService.queryIgnoreCategory({
-        appId: props.appId!,
-        operationId: props.configTarget === CONFIG_TARGET.GLOBAL ? undefined : props.operationId,
+      ComparisonService.queryAggregateIgnoreCategory({
+        appId: props.appId,
+        pageSize: pagination.pageSize,
+        pageIndex: pagination.current,
+        ...searchParams,
       }),
     {
-      ready: !!(
-        props.appId &&
-        (props.configTarget === CONFIG_TARGET.GLOBAL || // GLOBAL ready
-          // INTERFACE ready
-          (props.configTarget === CONFIG_TARGET.INTERFACE && props.operationId))
-      ),
-      refreshDeps: [props.operationId, props.configTarget],
-      onSuccess(res) {
-        reset();
-      },
+      refreshDeps: [pagination, searchParams],
     },
   );
 
-  const { run: insertIgnoreCategory } = useRequest(
-    (ignoreCategoryDetail: IgnoreCategory) =>
-      ComparisonService.insertIgnoreCategory({
-        appId: props.appId!,
-        operationId: props.configTarget === CONFIG_TARGET.GLOBAL ? undefined : props.operationId,
-        ignoreCategoryDetail,
-      }),
-    {
-      manual: true,
-      ready: !!props.appId,
-      onSuccess(success) {
-        if (success) {
-          message.success(t('message.updateSuccess'));
-          queryIgnoreCategory();
-        } else message.error(t('message.updateFailed'));
-      },
+  const { run: insertIgnoreCategory } = useRequest(ComparisonService.insertIgnoreCategory, {
+    manual: true,
+    onSuccess(success) {
+      if (success) {
+        message.success(t('message.updateSuccess'));
+        queryIgnoreCategory();
+      } else message.error(t('message.updateFailed'));
     },
-  );
+  });
 
   const { run: deleteIgnoreCategory } = useRequest(ComparisonService.deleteIgnoreCategory, {
     manual: true,
     onSuccess(success) {
       if (success) {
         message.success(t('message.delSuccess'));
+        setTableMode(CONFIG_INFO_TABLE_MODE.DISPLAY);
         queryIgnoreCategory();
       } else message.error(t('message.delFailed'));
     },
   });
 
-  const handleAdd = () => {
-    if (operationTypeValue) {
-      insertIgnoreCategory({
-        operationType: operationTypeValue,
-        operationName: operationNameValue,
-      });
-    } else {
-      setOperationTypeSelectStatus('error');
-      setTimeout(() => setOperationTypeSelectStatus(undefined), 1000);
+  const columns: ColumnsType<IgnoreCategoryInfo> = [
+    {
+      title: t('appSetting.categoryType', { ns: 'components' }),
+      dataIndex: ['ignoreCategoryDetail', 'operationType'],
+    },
+    {
+      title: t('appSetting.operationName', { ns: 'components' }),
+      dataIndex: ['ignoreCategoryDetail', 'operationName'],
+      render: (text: string) => text || '*',
+    },
+  ];
+
+  // const handleAdd = () => {
+  //   if (operationTypeValue) {
+  //     insertIgnoreCategory({
+  //       operationType: operationTypeValue,
+  //       operationName: operationNameValue,
+  //     });
+  //   } else {
+  //     setOperationTypeSelectStatus('error');
+  //     setTimeout(() => setOperationTypeSelectStatus(undefined), 1000);
+  //   }
+  // };
+
+  function handleSearch(search: Record<string, string | undefined>) {
+    if (pagination.current !== 1) {
+      setPagination({ current: 1, pageSize: pagination.pageSize });
     }
-  };
+
+    const operationIds: PageQueryComparisonReq['operationIds'] = [];
+    const dependencyIds: PageQueryComparisonReq['dependencyIds'] = [];
+    const operationNameSearchLowerCase = search['operationName']?.toLowerCase() || '';
+    const dependencyNameSearchLowerCase = search['dependencyName']?.toLowerCase() || '';
+
+    if (operationNameSearchLowerCase && 'global'.includes(operationNameSearchLowerCase))
+      operationIds.push(null);
+
+    props.operationList?.forEach((operation) => {
+      if (
+        operationNameSearchLowerCase &&
+        operation.operationName.toLowerCase().includes(operationNameSearchLowerCase)
+      )
+        operationIds.push(operation.id);
+      operation.dependencyList?.forEach((dependency) => {
+        if (
+          dependencyNameSearchLowerCase &&
+          dependency.operationName?.toLowerCase()?.includes(dependencyNameSearchLowerCase)
+        )
+          dependencyIds.push(dependency.dependencyId);
+      });
+    });
+
+    setSearchParams({
+      operationIds,
+      dependencyIds,
+    });
+  }
 
   const handleDelete = () => {
-    if (selectedRowKey) deleteIgnoreCategory({ id: selectedRowKey });
-    else message.error(t('message.selectRowWarning'));
+    const id = selectedRows[0]?.id;
+    if (id) {
+      deleteIgnoreCategory({ id });
+    } else message.error(t('message.selectRowWarning'));
   };
 
-  const columns = useMemo(
-    () => [
-      {
-        title: t('appSetting.categoryType', { ns: 'components' }),
-        dataIndex: ['ignoreCategoryDetail', 'operationType'],
-      },
-      {
-        title: t('appSetting.operationName', { ns: 'components' }),
-        dataIndex: ['ignoreCategoryDetail', 'operationName'],
-        render: (text: string) => text || '*',
-      },
-    ],
-    [t],
-  );
+  const handleSubmit: AddConfigModalProps<IgnoreCategory>['onSubmit'] = (form) =>
+    form.validateFields().then((params) => {
+      const { appId, operationId, operationType, operationName } = params;
+      insertIgnoreCategory({
+        appId,
+        operationId,
+        ignoreCategoryDetail: {
+          operationType,
+          operationName,
+        },
+      });
+    });
+  const TableFooter = () => (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div>
+        {data.totalCount > pagination.pageSize && (
+          <Pagination
+            total={data.totalCount}
+            current={pagination.current}
+            pageSize={pagination.pageSize}
+            pageSizeOptions={pageSizeOptions}
+            onChange={(page, pageSize) => {
+              setPagination({
+                current: page,
+                pageSize,
+              });
+            }}
+          />
+        )}
+      </div>
 
-  const footerRender = () => (
-    <div ref={footerRef}>
-      {mode === Mode.READ ? (
-        <Flex key='read' justify={'end'}>
-          <Button type='text' icon={<PlusOutlined />} onClick={() => setMode(Mode.ADD)}>
-            {t('add', { ns: 'common' })}
-          </Button>
-          <Button type='text' icon={<DeleteOutlined />} onClick={() => setMode(Mode.DELETE)}>
-            {t('delete')}
-          </Button>
-        </Flex>
-      ) : mode === Mode.ADD ? (
-        <div key='add'>
-          <Space>
-            <Select
-              value={operationTypeValue}
-              options={categoryTypeOptions}
-              status={operationTypeSelectStatus}
-              onChange={(value) => {
-                setOperationTypeValue(value);
-                setOperationNameValue(undefined);
-
-                setOperationNameOptions(
-                  props.configTarget === CONFIG_TARGET.GLOBAL
-                    ? // GLOBAL: set all dependency
-                      Array.from(optionsGroupMap.get(value) || [])?.map((value) => ({
-                        label: value,
-                        value,
-                      }))
-                    : // INTERFACE: set dependency of current interface
-                      interfacesList
-                        ?.find((item) => item.id === props.operationId)
-                        ?.dependencyList?.filter((item) => item.operationType === value)
-                        .map((item) => ({
-                          label: item.operationName,
-                          value: item.operationName,
-                        })) || [],
-                );
-              }}
-              placeholder={t('appSetting.categoryTypePlaceholder', { ns: 'components' })}
-              style={{ flex: 1 }}
-            />
-
-            <Select
-              allowClear
-              value={operationNameValue}
-              options={operationNameOptions}
-              onChange={setOperationNameValue}
-              placeholder={t('appSetting.operationNamePlaceholder', { ns: 'components' })}
-              style={{ flex: 1 }}
-            />
-          </Space>
-          <Space style={{ marginLeft: 'auto', float: 'right' }}>
-            <Button type='text' icon={<CloseOutlined />} onClick={reset}>
-              {t('cancel')}
+      <div>
+        {tableMode === CONFIG_INFO_TABLE_MODE.DISPLAY ? (
+          <>
+            <Button
+              type='text'
+              icon={<PlusOutlined />}
+              onClick={() => addConfigModalRef.current?.open()}
+            >
+              {t('common:add')}
             </Button>
-
-            <Button type='primary' icon={<PlusOutlined />} onClick={handleAdd}>
-              {t('add', { ns: 'common' })}
+            <Button
+              type='text'
+              icon={<EditOutlined />}
+              onClick={() => setTableMode(CONFIG_INFO_TABLE_MODE.EDIT)}
+            >
+              {t('common:edit')}
             </Button>
-          </Space>
-        </div>
-      ) : (
-        <Flex key='delete' justify='end'>
-          <Button type='text' icon={<CloseOutlined />} onClick={reset}>
-            {t('cancel')}
-          </Button>
-          <Button danger type='text' icon={<DeleteOutlined />} onClick={handleDelete}>
-            {t('delete')}
-          </Button>
-        </Flex>
-      )}
+          </>
+        ) : (
+          // tableMode === CONFIG_INFO_TABLE_MODE.EDIT
+          <>
+            <Button
+              type='text'
+              icon={<CloseOutlined />}
+              onClick={() => setTableMode(CONFIG_INFO_TABLE_MODE.DISPLAY)}
+            >
+              {t('common:cancel')}
+            </Button>
+            <Popconfirm title={t('components:appSetting.confirmDelete')} onConfirm={handleDelete}>
+              <Button danger type='text' icon={<DeleteOutlined />} disabled={!selectedRows?.length}>
+                {t('common:delete')}
+              </Button>
+            </Popconfirm>
+          </>
+        )}
+      </div>
     </div>
   );
 
   return (
     <div>
-      <Table
-        bordered
+      <ConfigInfoTable<IgnoreCategoryInfo>
         rowKey='id'
-        pagination={false}
+        requestSearch
+        loading={loading}
         columns={columns}
-        dataSource={ignoreCategoryData}
+        builtInColumns={{
+          dependencyName: {
+            hidden: true,
+          },
+        }}
+        dataSource={data.ignoreCategories}
+        footer={TableFooter}
         rowSelection={
-          mode === Mode.DELETE
+          tableMode !== CONFIG_INFO_TABLE_MODE.DISPLAY
             ? {
                 type: 'radio',
-                selectedRowKeys: [selectedRowKey],
-                onChange: (id) => setSelectedRowKey(id[0] as string),
+                onSelect: (record, selected, selectedRows) => {
+                  setSelectedRows(selectedRows.filter(Boolean));
+                },
               }
             : undefined
         }
-        onRow={(record) => ({
-          onClick: () => mode === Mode.DELETE && setSelectedRowKey(record.id),
-        })}
-        footer={footerRender}
+        onSearch={handleSearch}
+      />
+
+      <AddConfigModal<IgnoreCategory>
+        ref={addConfigModalRef}
+        appId={props.appId}
+        operationList={props.operationList}
+        builtInItems={{
+          dependency: false,
+        }}
+        field={(fieldProps) => (
+          <DependencyInput {...fieldProps} operationList={props.operationList} />
+        )}
+        onSubmit={handleSubmit}
       />
     </div>
   );
