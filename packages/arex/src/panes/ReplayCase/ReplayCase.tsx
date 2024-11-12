@@ -13,7 +13,7 @@ import {
 } from '@arextest/arex-core';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { useRequest } from 'ahooks';
-import { App } from 'antd';
+import { App, Button, Dropdown } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -23,7 +23,7 @@ import CompareConfig from '@/panes/AppSetting/CompareConfig';
 import CaseDiff from '@/panes/ReplayCase/CaseDiff';
 import { IgnoreType } from '@/panes/ReplayCase/CaseDiff/CaseDiffViewer';
 import { ComparisonService, ReportService, ScheduleService } from '@/services';
-import { DependencyParams, ExpirationType } from '@/services/ComparisonService';
+import { DependencyParams, ExpirationType, IgnoreCategory } from '@/services/ComparisonService';
 import { InfoItem, PlanItemStatistic, ReplayCaseType } from '@/services/ReportService';
 import { useMenusPanes } from '@/store';
 import { decodePaneKey } from '@/store/useMenusPanes';
@@ -142,6 +142,24 @@ const ReplayCasePage: ArexPaneFC<{ filter?: number } | undefined> = (props) => {
     },
   );
 
+  const { run: insertIgnoreCategory } = useRequest(
+    (ignoreCategoryDetail: IgnoreCategory) =>
+      ComparisonService.insertIgnoreCategory({
+        appId: planItemData!.appId,
+        operationId: planItemData!.operationId,
+        ignoreCategoryDetail,
+      }),
+    {
+      manual: true,
+      ready: !!planItemData?.appId && !!planItemData?.operationId,
+      onSuccess(success) {
+        if (success) {
+          message.success(t('components:replay.compareConfigSuccess'));
+        } else message.error(t('message.updateFailed', { ns: 'common' }));
+      },
+    },
+  );
+
   function handleClickCompareConfigSetting(data?: InfoItem) {
     setSelectedDependency(data);
     setCompareConfigOpen(true);
@@ -208,15 +226,51 @@ const ReplayCasePage: ArexPaneFC<{ filter?: number } | undefined> = (props) => {
                   />
                 }
                 itemsExtraRender={(data) => (
-                  <TooltipButton
-                    icon={<SettingOutlined />}
-                    title={t('appSetting.compareConfig')}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClickCompareConfigSetting(data);
-                    }}
-                    style={{ marginRight: '6px' }}
-                  />
+                  <div style={{ marginRight: '6px' }}>
+                    {data.isEntry ? (
+                      <TooltipButton
+                        icon={<SettingOutlined />}
+                        title={t('appSetting.compareConfig')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClickCompareConfigSetting(data);
+                        }}
+                      />
+                    ) : (
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              label: <span>{t('components:appSetting.categoryIgnore')}</span>,
+                              key: 'categoryIgnore',
+                              onClick: (menuInfo) => {
+                                menuInfo.domEvent.stopPropagation();
+                                insertIgnoreCategory({
+                                  operationType: data.categoryName,
+                                  operationName: data.operationName,
+                                });
+                              },
+                            },
+                            {
+                              label: <span>{t('components:appSetting.compareConfig')}</span>,
+                              key: 'ignore',
+                              onClick: (menuInfo) => {
+                                menuInfo.domEvent.stopPropagation();
+                                handleClickCompareConfigSetting(data);
+                              },
+                            },
+                          ],
+                        }}
+                      >
+                        <Button
+                          size='small'
+                          type='text'
+                          icon={<SettingOutlined />}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </Dropdown>
+                    )}
+                  </div>
                 )}
                 onChange={setSelectedDependency}
                 onIgnoreKey={insertIgnoreNode}

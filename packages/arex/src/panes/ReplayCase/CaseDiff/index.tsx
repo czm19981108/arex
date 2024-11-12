@@ -1,17 +1,7 @@
-import {
-  css,
-  EllipsisTooltip,
-  EmptyWrapper,
-  HoveredActionButton,
-  SceneCode,
-  useTranslation,
-} from '@arextest/arex-core';
-import { useRequest } from 'ahooks';
-import { App, Button, Collapse, CollapseProps, Flex, Tooltip, Typography } from 'antd';
+import { css, EllipsisTooltip, EmptyWrapper, SceneCode, useTranslation } from '@arextest/arex-core';
+import { Collapse, CollapseProps, Flex, Tooltip, Typography } from 'antd';
 import React, { FC, useMemo, useState } from 'react';
 
-import { ComparisonService } from '@/services';
-import { IgnoreCategory } from '@/services/ComparisonService';
 import { InfoItem } from '@/services/ReportService';
 
 import CaseDiffTooltip, { DiffPathTooltipProps } from './CaseDiffTooltip';
@@ -40,7 +30,6 @@ const CaseDiff: FC<DiffPathProps> = (props) => {
     ...restProps
   } = props;
 
-  const { message } = App.useApp();
   const { t } = useTranslation('components');
 
   const [onlyFailed, setOnlyFailed] = useState(defaultOnlyFailed);
@@ -58,24 +47,6 @@ const CaseDiff: FC<DiffPathProps> = (props) => {
       return true;
     });
   }, [data, onlyFailed, searchOperationName]);
-
-  const { run: insertIgnoreCategory } = useRequest(
-    (ignoreCategoryDetail: IgnoreCategory) =>
-      ComparisonService.insertIgnoreCategory({
-        appId: props.appId!,
-        operationId: props.operationId,
-        ignoreCategoryDetail,
-      }),
-    {
-      manual: true,
-      ready: !!props.appId,
-      onSuccess(success) {
-        if (success) {
-          message.success(t('message.updateSuccess', { ns: 'common' }));
-        } else message.error(t('message.updateFailed', { ns: 'common' }));
-      },
-    },
-  );
 
   const items = useMemo<CollapseProps['items']>(
     () =>
@@ -96,27 +67,9 @@ const CaseDiff: FC<DiffPathProps> = (props) => {
                   </Typography.Text>
                 </Tooltip>
               ) : (
-                <HoveredActionButton
-                  hoveredNode={
-                    <Button
-                      type='text'
-                      size='small'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        insertIgnoreCategory({
-                          operationType: data.categoryName,
-                          operationName: data.operationName,
-                        });
-                      }}
-                    >
-                      {t('replayCase.ignore')}
-                    </Button>
-                  }
-                >
-                  <Typography.Text strong type='secondary'>
-                    {`[${data.categoryName}]`}
-                  </Typography.Text>
-                </HoveredActionButton>
+                <Typography.Text strong type='secondary'>
+                  {`[${data.categoryName}]`}
+                </Typography.Text>
               )}
             </div>
           </Flex>
@@ -124,7 +77,7 @@ const CaseDiff: FC<DiffPathProps> = (props) => {
         extra: itemsExtraRender?.(data),
         children: <CaseDiffViewer {...restProps} defaultActiveFirst data={data} height='400px' />,
       })),
-    [diffListFiltered, insertIgnoreCategory, itemsExtraRender, restProps],
+    [diffListFiltered, itemsExtraRender, restProps],
   );
 
   return (
