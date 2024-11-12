@@ -226,7 +226,7 @@ const NodesTransform = (props: NodeTransformProps) => {
 
       <AddConfigModal<RootTransformInfo>
         ref={addConfigModalRef}
-        title={t('components:appSetting.methodName')} // TODO
+        title={t('components:appSetting.addTransformNode')}
         appId={props.appId}
         operationList={props.operationList}
         rules={{
@@ -239,7 +239,7 @@ const NodesTransform = (props: NodeTransformProps) => {
         field={(fieldProps) => (
           <Form.Item
             name='transformMethodName'
-            label={t('components:appSetting.addTransformNode')}
+            label={t('components:appSetting.transformedNode')}
             rules={[
               {
                 required: true,

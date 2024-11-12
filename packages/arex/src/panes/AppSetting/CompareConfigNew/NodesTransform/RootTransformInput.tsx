@@ -32,7 +32,7 @@ const RootTransformInput: FC<RootTransformInputProps> = (props) => {
   return (
     <Select
       options={methodsOptions}
-      placeholder={t('components:appSetting.transformedNode')}
+      placeholder={t('components:appSetting.addTransformNode')}
       {...selectProps}
     />
   );

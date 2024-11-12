@@ -239,7 +239,7 @@ export default function NodeIgnore(props: NodeIgnoreProps) {
 
       <AddConfigModal<NodeIgnorePrivate>
         ref={addConfigModalRef}
-        title={t('components:appSetting.nodesIgnore')}
+        title={t('components:appSetting.addNodesIgnore')}
         appId={props.appId}
         operationList={props.operationList}
         field={({ appId, operationId, dependency }) => (

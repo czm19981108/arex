@@ -16,25 +16,25 @@ export default function SortPathKeyInput(props: SortPathKeyInputProps) {
   const { appId, operationId, dependency } = props;
   const { t } = useTranslation();
 
-  const {
-    data: contract,
-    mutate: setContract,
-    loading: loadingContract,
-  } = useRequest(
-    () =>
-      ReportService.queryContract({
-        appId,
-        operationId,
-        ...dependency,
-      }),
-    {
-      ready: !!appId, // TODO && collapseExpand
-      refreshDeps: [appId, operationId, dependency],
-      onBefore() {
-        setContract();
-      },
-    },
-  );
+  // const {
+  //   data: contract,
+  //   mutate: setContract,
+  //   loading: loadingContract,
+  // } = useRequest(
+  //   () =>
+  //     ReportService.queryContract({
+  //       appId,
+  //       operationId,
+  //       ...dependency,
+  //     }),
+  //   {
+  //     ready: !!appId, // TODO && collapseExpand
+  //     refreshDeps: [appId, operationId, dependency],
+  //     onBefore() {
+  //       setContract();
+  //     },
+  //   },
+  // );
 
   return (
     <>
@@ -48,7 +48,7 @@ export default function SortPathKeyInput(props: SortPathKeyInputProps) {
         ]}
       >
         {/* TODO select path from contract tree */}
-        <Input />
+        <Input placeholder={t('components:appSetting.inputListSortPath')} />
       </Form.Item>
 
       <Form.Item
@@ -61,7 +61,12 @@ export default function SortPathKeyInput(props: SortPathKeyInputProps) {
         ]}
       >
         {/* TODO select path from contract tree */}
-        <Select allowClear mode='tags' options={[]} />
+        <Select
+          allowClear
+          mode='tags'
+          open={false}
+          placeholder={t('components:appSetting.inputListSortKeys')}
+        />
       </Form.Item>
     </>
   );

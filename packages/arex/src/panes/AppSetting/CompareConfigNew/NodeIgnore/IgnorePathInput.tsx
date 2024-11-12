@@ -1,5 +1,11 @@
 import { DownOutlined } from '@ant-design/icons';
-import { css, styled, TooltipButton, tryParseJsonString } from '@arextest/arex-core';
+import {
+  css,
+  styled,
+  TooltipButton,
+  tryParseJsonString,
+  useTranslation,
+} from '@arextest/arex-core';
 import { useRequest } from 'ahooks';
 import { Collapse, Input, InputProps, Space, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
@@ -24,6 +30,7 @@ export type ExclusionPathInputProps = Omit<InputProps, 'onChange'> & {
 
 const IgnorePathInput = (props: ExclusionPathInputProps) => {
   const { appId, operationId, dependency, ...inputProps } = props;
+  const { t } = useTranslation();
 
   const [expand, setExpand] = useState(false);
 
@@ -60,6 +67,7 @@ const IgnorePathInput = (props: ExclusionPathInputProps) => {
       <Space.Compact style={{ width: '100%' }}>
         <Input
           {...inputProps}
+          placeholder={t('components:appSetting.inputIgnorePath')}
           onChange={(e) => {
             props.onChange?.(e.target.value);
           }}

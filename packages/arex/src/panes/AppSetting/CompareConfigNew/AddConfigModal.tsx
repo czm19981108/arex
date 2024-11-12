@@ -186,7 +186,7 @@ const AddConfigModal = forwardRef(
               <Select
                 allowClear
                 optionFilterProp='label'
-                placeholder='choose interface'
+                placeholder={t('components:appSetting.selectInterface')}
                 popupMatchSelectWidth={false}
                 options={interfaceOptions}
               />
@@ -202,7 +202,7 @@ const AddConfigModal = forwardRef(
               <Select
                 allowClear
                 optionFilterProp='label'
-                placeholder='choose external dependency'
+                placeholder={t('components:appSetting.selectDependency')}
                 popupMatchSelectWidth={false}
                 loading={loadingDependency}
                 options={dependencyOptions}

@@ -35,7 +35,7 @@ export default function CompareConfigNew(props: CompareConfigNewProps) {
     },
     {
       key: 'nodeSort',
-      label: t('appSetting.nodesSort'),
+      label: t('appSetting.listSort'),
       children: <ListSort appId={props.appId} operationList={operationList} />,
     },
     {

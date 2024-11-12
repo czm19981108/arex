@@ -278,7 +278,7 @@ export default function ListSort(props: ListSortProps) {
         ref={addConfigModalRef}
         operationList={props.operationList}
         appId={props.appId}
-        title={t('components:appSetting.addSortKey')}
+        title={t('components:appSetting.addListSort')}
         rules={{
           operationId: [{ required: true }],
         }}
