@@ -5,7 +5,7 @@ import {
   setLocalStorage,
   useTranslation,
 } from '@arextest/arex-core';
-import { Tabs } from 'antd';
+import { Badge, Tabs } from 'antd';
 import React, { useEffect, useMemo } from 'react';
 
 import { APP_ID_KEY, PanesType } from '@/constant';
@@ -46,7 +46,11 @@ const AppSetting: ArexPaneFC<{ key: string }> = (props) => {
       },
       {
         key: 'compareConfigNew',
-        label: t('appSetting.compareConfig') + ' new',
+        label: (
+          <Badge size='small' count='new' offset={[12, 0]}>
+            {t('appSetting.compareConfig')}
+          </Badge>
+        ),
         children: <CompareConfigNew appId={appId} />,
       },
       {
