@@ -58,17 +58,19 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
     fallback?: ReactNode | ((record: T) => ReactNode),
   ): ColumnType<T> => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-      <div style={{ padding: 12 }}>
+      <div style={{ padding: '12px' }}>
         <Input
+          allowClear
+          size='small'
           ref={searchInput}
           placeholder={`Search ${dataIndex.toString()}`}
           value={selectedKeys[0]}
           onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
           onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex.toString())}
-          style={{ marginBottom: 8, display: 'block' }}
+          style={{ width: '160px' }}
         />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
           <Button
             size='small'
             onClick={() => {
@@ -80,11 +82,11 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
                   draft[dataIndex as string] = '';
                 }
               });
+              handleSearch([''], confirm, dataIndex.toString());
             }}
           >
             {t('common:reset')}
           </Button>
-
           <Button
             size='small'
             type='primary'
@@ -108,7 +110,7 @@ export default function ConfigInfoTable<T extends ComparisonConfigInfo>(
         ? String(record[dataIndex])?.toLowerCase().includes(value.toString().toLowerCase())
         : false,
     onFilterDropdownOpenChange: (open: boolean) => {
-      open && setTimeout(() => searchInput.current?.select(), 100);
+      open && setTimeout(() => searchInput.current?.focus(), 100);
     },
     render: (text: string | null, record) => {
       const columnsSearchValue = search?.[dataIndex as string];
