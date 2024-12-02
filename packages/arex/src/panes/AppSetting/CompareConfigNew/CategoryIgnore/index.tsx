@@ -242,7 +242,7 @@ const CategoryIgnore: FC<CategoryIgnoreProps> = (props) => {
         ref={addConfigModalRef}
         appId={props.appId}
         operationList={props.operationList}
-        title={t('$i18n.t("components:appSetting.addCategoryIgnore")')}
+        title={t('components:appSetting.addCategoryIgnore')}
         builtInItems={{
           dependency: false,
         }}
