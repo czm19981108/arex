@@ -19,8 +19,8 @@ const IntegerStepSlider: FC<FormItemProps<number>> = (props) => {
   return (
     <>
       <Space>
-        <Slider min={0} max={10} onChange={onChange} value={value} style={{ width: '200px' }} />
-        <InputNumber precision={0} min={0} max={10} value={value} onChange={onChange} />
+        <Slider min={0} max={10000} onChange={onChange} value={value} style={{ width: '200px' }} />
+        <InputNumber precision={0} min={0} max={10000} value={value} onChange={onChange} />
         <Typography.Text type='secondary'>{t('appSetting.frequencyUnit')} </Typography.Text>
       </Space>
 
