@@ -84,7 +84,9 @@ const Standard: FC<StandardProps> = (props) => {
           ?.split(',')
           .filter(Boolean),
         serializeSkipInfoList: res.serializeSkipInfoList ? res.serializeSkipInfoList : undefined,
-        whiteListServiceOperationSet: res.extendField?.whiteListServiceOperations?.split(',').filter(Boolean),
+        whiteListServiceOperationSet: res.extendField?.whiteListServiceOperations
+          ?.split(',')
+          .filter(Boolean),
       });
 
       setInitialValues((state) => {
