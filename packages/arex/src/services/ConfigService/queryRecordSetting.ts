@@ -23,6 +23,7 @@ export type ServiceCollectConfig = {
   extendField?: { includeServiceOperations?: string } | null;
   multiEnvConfigs?: MultiEnvironmentConfig[];
   envTags?: Record<string, string[]>;
+  whiteListServiceOperationSet: string[];
 };
 
 export async function queryRecordSetting(params: QueryRecordSettingReq) {

@@ -32,6 +32,7 @@ type SettingFormType = {
   recordMachineCountLimit?: number;
   includeServiceOperationSet: string[] | undefined;
   serializeSkipInfoList?: SerializeSkipInfo[];
+  whiteListServiceOperationSet: string[];
 };
 
 const format = 'HH:mm';
@@ -44,6 +45,7 @@ const defaultValues: Omit<
   period: Dayjs[];
   includeServiceOperationSet: string[];
   serializeSkipInfoList: SerializeSkipInfo[];
+  whiteListServiceOperationSet: string[];
 } = {
   allowDayOfWeeks: [],
   sampleRate: 1,
@@ -52,6 +54,7 @@ const defaultValues: Omit<
   recordMachineCountLimit: 1,
   includeServiceOperationSet: [],
   serializeSkipInfoList: [],
+  whiteListServiceOperationSet: [],
 };
 
 const Standard: FC<StandardProps> = (props) => {
@@ -81,6 +84,7 @@ const Standard: FC<StandardProps> = (props) => {
           ?.split(',')
           .filter(Boolean),
         serializeSkipInfoList: res.serializeSkipInfoList ? res.serializeSkipInfoList : undefined,
+        whiteListServiceOperationSet: res.whiteListServiceOperationSet?.filter(Boolean),
       });
 
       setInitialValues((state) => {
@@ -114,6 +118,7 @@ const Standard: FC<StandardProps> = (props) => {
         includeServiceOperations: values.includeServiceOperationSet?.join(','),
       },
       serializeSkipInfoList: values.serializeSkipInfoList,
+      whiteListServiceOperationSet: values.whiteListServiceOperationSet?.filter(Boolean),
     };
     update(params);
   };
@@ -214,6 +219,23 @@ const Standard: FC<StandardProps> = (props) => {
                     appId={props.appId}
                     open={!!props.appId}
                     placeholder={t('appSetting.exclusionTooltip')}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  label={
+                    <HelpTooltip title={t('appSetting.whiteListTooltips')}>
+                      {t('appSetting.whiteList')}
+                    </HelpTooltip>
+                  }
+                  name='whiteListServiceOperationSet'
+                >
+                  <InterfaceSelect
+                    labelAsValue
+                    mode='tags'
+                    appId={props.appId}
+                    open={!!props.appId}
+                    placeholder={t('appSetting.whiteListTooltips')}
                   />
                 </Form.Item>
               </>

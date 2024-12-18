@@ -372,7 +372,9 @@
     "transformMethodArgs":"Method args",
     "selectNodePath": "Select Node Path",
     "clickToSelectNodePath": "Click to select transformed node path",
-    "deleteTransformConfirm": "Are you sure to delete this transform node?"
+    "deleteTransformConfirm": "Are you sure to delete this transform node?",
+    "whiteListTooltips": "Select the path to record at the maximum sampling rate",
+    "whiteList": "whiteList"
   },
   "env": {
     "searchEnvironment": "Search Environment",
