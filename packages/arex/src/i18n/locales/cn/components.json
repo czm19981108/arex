@@ -371,7 +371,7 @@
     "selectNodePath": "选择节点路径",
     "clickToSelectNodePath": "点击选择转换节点路径",
     "deleteTransformConfirm": "确定删除该转换节点?",
-    "whiteListTooltips": "选择要以最大采样率录制的路径",
+    "whiteListTooltips": "选择要以最大采样率录制的路径。",
     "whiteList": "白名单规则"
   },
   "env": {

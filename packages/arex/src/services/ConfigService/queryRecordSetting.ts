@@ -20,10 +20,9 @@ export type ServiceCollectConfig = {
   excludeServiceOperationSet: string[];
   recordMachineCountLimit?: number;
   serializeSkipInfoList?: SerializeSkipInfo[] | null;
-  extendField?: { includeServiceOperations?: string } | null;
+  extendField?: { includeServiceOperations?: string; whiteListServiceOperations?: string } | null;
   multiEnvConfigs?: MultiEnvironmentConfig[];
   envTags?: Record<string, string[]>;
-  whiteListServiceOperationSet: string[];
 };
 
 export async function queryRecordSetting(params: QueryRecordSettingReq) {

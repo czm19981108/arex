@@ -32,7 +32,7 @@ type SettingFormType = {
   recordMachineCountLimit?: number;
   includeServiceOperationSet: string[] | undefined;
   serializeSkipInfoList?: SerializeSkipInfo[];
-  whiteListServiceOperationSet: string[];
+  whiteListServiceOperationSet: string[] | undefined;
 };
 
 const format = 'HH:mm';
@@ -84,7 +84,7 @@ const Standard: FC<StandardProps> = (props) => {
           ?.split(',')
           .filter(Boolean),
         serializeSkipInfoList: res.serializeSkipInfoList ? res.serializeSkipInfoList : undefined,
-        whiteListServiceOperationSet: res.whiteListServiceOperationSet?.filter(Boolean),
+        whiteListServiceOperationSet: res.extendField?.whiteListServiceOperations?.split(',').filter(Boolean),
       });
 
       setInitialValues((state) => {
@@ -116,9 +116,9 @@ const Standard: FC<StandardProps> = (props) => {
       recordMachineCountLimit: values.recordMachineCountLimit,
       extendField: {
         includeServiceOperations: values.includeServiceOperationSet?.join(','),
+        whiteListServiceOperations: values.whiteListServiceOperationSet?.join(','),
       },
       serializeSkipInfoList: values.serializeSkipInfoList,
-      whiteListServiceOperationSet: values.whiteListServiceOperationSet?.filter(Boolean),
     };
     update(params);
   };
